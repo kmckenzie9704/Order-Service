@@ -43,10 +43,8 @@ import java.util.Set;
 })
 public class OrderHeader extends BaseEntity{
 
-    private String customerName;
-
-    @OneToMany(mappedBy = "orderHeader", cascade = CascadeType.PERSIST)
-    private Set<OrderLine> orderLines;
+    @ManyToOne
+    private Customer customer;
 
     @Embedded
     private Address shippingAddress;
@@ -55,6 +53,12 @@ public class OrderHeader extends BaseEntity{
 
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
+
+    @OneToMany(mappedBy = "orderHeader", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    private Set<OrderLine> orderLines;
+
+    @OneToOne(cascade = CascadeType.PERSIST)
+    private OrderApproval orderApproval;
 
     public void addOrderLine(OrderLine orderLine){
         if (orderLines == null){
@@ -65,15 +69,15 @@ public class OrderHeader extends BaseEntity{
         orderLine.setOrderHeader(this);
     }
 
-    public String getCustomerName() {
-        return customerName;
+    public Customer getCustomer() {
+        return customer;
     }
 
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
     }
 
-    public Address getShippingAddress() {
+     public Address getShippingAddress() {
         return shippingAddress;
     }
 
@@ -105,13 +109,21 @@ public class OrderHeader extends BaseEntity{
         this.orderLines = orderLines;
     }
 
+    public OrderApproval getOrderApproval() {
+        return orderApproval;
+    }
+
+    public void setOrderApproval(OrderApproval orderApproval) {
+        this.orderApproval = orderApproval;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof OrderHeader that)) return false;
         if (!super.equals(o)) return false;
 
-        if (getCustomerName() != null ? !getCustomerName().equals(that.getCustomerName()) : that.getCustomerName() != null)
+        if (getCustomer() != null ? !getCustomer().equals(that.getCustomer()) : that.getCustomer() != null)
             return false;
         if (getOrderLines() != null ? !getOrderLines().equals(that.getOrderLines()) : that.getOrderLines() != null)
             return false;
@@ -125,7 +137,7 @@ public class OrderHeader extends BaseEntity{
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + (getCustomerName() != null ? getCustomerName().hashCode() : 0);
+        result = 31 * result + (getCustomer() != null ? getCustomer().hashCode() : 0);
         result = 31 * result + (getOrderLines() != null ? getOrderLines().hashCode() : 0);
         result = 31 * result + (getShippingAddress() != null ? getShippingAddress().hashCode() : 0);
         result = 31 * result + (getBillToAddress() != null ? getBillToAddress().hashCode() : 0);

@@ -1,9 +1,7 @@
 package ken.learning.Order.Service.repositories;
 
-import ken.learning.Order.Service.domain.OrderHeader;
-import ken.learning.Order.Service.domain.OrderLine;
-import ken.learning.Order.Service.domain.Product;
-import ken.learning.Order.Service.domain.ProductStatus;
+import jakarta.persistence.EntityNotFoundException;
+import ken.learning.Order.Service.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +22,9 @@ class OrderHeaderRepositoryTest {
     @Autowired
     ProductRepository productRepository;
 
+    @Autowired
+    CustomerRepository customerRepository;
+
     Product product;
 
     @BeforeEach
@@ -37,13 +38,21 @@ class OrderHeaderRepositoryTest {
     @Test
     void testSaveOrderWithLine(){
         OrderHeader orderHeader = new OrderHeader();
-        orderHeader.setCustomerName("Red Skelton");
+        Customer customer = new Customer();
+        customer.setCustomerName("Red Skelton");
+        Customer savedCustomer = customerRepository.save(customer);
+
+        orderHeader.setCustomer(savedCustomer);
 
         OrderLine orderLine = new OrderLine();
         orderLine.setQuantityOrdered(5);
         orderLine.setProduct(product);
 
         orderHeader.addOrderLine(orderLine);
+
+        OrderApproval approval = new OrderApproval();
+        approval.setApprovedBy("me");
+        orderHeader.setOrderApproval(approval);
 
         OrderHeader savedOrder = orderHeaderRepository.save(orderHeader);
 
@@ -54,7 +63,7 @@ class OrderHeaderRepositoryTest {
         assertNotNull(savedOrder.getOrderLines());
         assertEquals(savedOrder.getOrderLines().size(), 1);
 
-        OrderHeader fetchedOrder = orderHeaderRepository.getOrderHeaderById(savedOrder.getId());
+        OrderHeader fetchedOrder = orderHeaderRepository.getById(savedOrder.getId());
         assertNotNull(fetchedOrder);
         assertEquals(fetchedOrder.getOrderLines().size(), 1);
 
@@ -63,13 +72,19 @@ class OrderHeaderRepositoryTest {
     @Test
     void testSaveOrderHeader(){
         OrderHeader orderHeader = new OrderHeader();
-        orderHeader.setCustomerName("Clem Cladiddlehopper");
+        Customer customer = new Customer();
+        customer.setCustomerName("Red Skelton");
+        Customer savedCustomer = customerRepository.save(customer);
+
+
+
+        orderHeader.setCustomer(savedCustomer);
         OrderHeader savedOrder = orderHeaderRepository.save(orderHeader);
 
         assertNotNull(savedOrder);
         assertNotNull(savedOrder.getId());
 
-        OrderHeader fetchedOrder = orderHeaderRepository.getOrderHeaderById(savedOrder.getId());
+        OrderHeader fetchedOrder = orderHeaderRepository.getById(savedOrder.getId());
         assertNotNull(fetchedOrder);
         assertNotNull(fetchedOrder.getId());
         assertNotNull(fetchedOrder.getCreatedDate());
@@ -77,11 +92,31 @@ class OrderHeaderRepositoryTest {
 
     }
 
-//    @Test
-//    void getOrderHeaderById() {
-//    }
-//
-//    @Test
-//    void findOrderHeaderByCustomerName() {
-//    }
+    @Test
+    void testDeleteCascade() throws EntityNotFoundException {
+        OrderHeader orderHeader = new OrderHeader();
+        Customer customer = new Customer();
+        customer.setCustomerName("Red Skelton");
+        orderHeader.setCustomer(customerRepository.save(customer));
+
+        OrderLine orderLine = new OrderLine();
+        orderLine.setQuantityOrdered(3);
+        orderLine.setProduct(product);
+
+        orderHeader.addOrderLine(orderLine);
+        OrderHeader savedOrder = orderHeaderRepository.saveAndFlush(orderHeader);
+
+        System.out.println("Order saved and flushed");
+
+        orderHeaderRepository.deleteById(savedOrder.getId());
+        orderHeaderRepository.flush();
+
+        assertThrows(EntityNotFoundException.class, () -> {
+            OrderHeader fetchedOrder = orderHeaderRepository.getById(savedOrder.getId());
+            assertNull(fetchedOrder);
+        });
+
+
+    }
+
 }
