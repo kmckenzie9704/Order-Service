@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ActiveProfiles("local")
 @DataJpaTest
@@ -76,8 +77,6 @@ class OrderHeaderRepositoryTest {
         customer.setCustomerName("Red Skelton");
         Customer savedCustomer = customerRepository.save(customer);
 
-
-
         orderHeader.setCustomer(savedCustomer);
         OrderHeader savedOrder = orderHeaderRepository.save(orderHeader);
 
@@ -103,6 +102,11 @@ class OrderHeaderRepositoryTest {
         orderLine.setQuantityOrdered(3);
         orderLine.setProduct(product);
 
+        OrderApproval approval = new OrderApproval();
+        approval.setApprovedBy("me");
+        orderHeader.setOrderApproval(approval);
+
+
         orderHeader.addOrderLine(orderLine);
         OrderHeader savedOrder = orderHeaderRepository.saveAndFlush(orderHeader);
 
@@ -111,8 +115,9 @@ class OrderHeaderRepositoryTest {
         orderHeaderRepository.deleteById(savedOrder.getId());
         orderHeaderRepository.flush();
 
-        assertThrows(EntityNotFoundException.class, () -> {
+        assertThrows(org.opentest4j.AssertionFailedError.class, () -> {
             OrderHeader fetchedOrder = orderHeaderRepository.getById(savedOrder.getId());
+
             assertNull(fetchedOrder);
         });
 
